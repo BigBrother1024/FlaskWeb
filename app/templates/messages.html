@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}博客-消息{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>消息管理</h1>
+</div>
+<ul class="posts">
+    {% for message in messages %}
+    <li class="post">
+        <div class="profile-thumbnail">
+            <a href="{{ url_for('.user', username=message.sender.username) }}">
+                <img class="img-rounded profile-thumbnail" src="{{ message.sender.gravatar(size=40) }}">
+            </a>
+        </div>
+        <div class="post-content">
+            <div class="post-date">{{ moment(message.timestamp).fromNow() }}</div>
+            <div class="post-author"><a href="{{ url_for('.user', username=message.sender.username) }}">{{ message.sender.username }}</a> </div>
+            <div class="post-body">
+                {{ message.body }}
+            </div>
+        </div>
+        <div class="post-footer">
+            {% if not message.read %}
+                <a href="{{ url_for('main.read_message', id=message.id) }}"> <span class="label label-primary">
+                    标记为已读</span>
+                </a>
+            {% else %}
+                <span class="btn btn-default btn-xs">
+                    已读</span>
+            </div>{% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

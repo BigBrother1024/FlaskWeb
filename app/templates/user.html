@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }}的博客{% endblock %}
+
+{% block page_content %}
+    <div class="page-header">
+    <img class="img-responsive profile-thumbnail" src="{{ user.gravatar(size=256) }}">
+    <div class="profile-header">
+        <h1>{{ user.username }}</h1><br>
+        <p>{% if current_user.can(Permission.FOLLOW) %}
+                {% if not current_user.is_following(user) %}
+                <a href="{{ url_for('.follow', username=user.username) }}"
+                    class="btn btn-primary">关注</a>
+                {% else %}
+                <a href="{{ url_for('.unfollow', username=user.username) }}"
+                   class="btn btn-default">取消关注</a>
+                {% endif %}</p>
+        <p><button class="btn btn-primary " data-toggle="modal" data-target="#myModal">私信</button></p>{% endif %}
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">发私信给{{ user.username }}</h4>
+            </div>
+            <div class="modal-body"><form role="form" action="{{ url_for('main.send_message', username=user.username) }}">
+                <div class="form-group">
+                <input type="text" class="form-control" placeholder="私信内容" {% if message %}value="{{ message }}"{% endif %}
+                       name="message"><br>
+                    <button type="submit" class="btn btn-primary">发送</button>
+                    </div></form></div>
+        </div>
+    </div>
+</div>
+        <br>
+        <p>
+            {% if user == current_user %}
+                <a class="btn btn-danger" href="{{ url_for('.edit_profile') }}">编辑资料</a>{% endif %}</p>
+        <p>    {% if current_user.is_administrator() %}
+            <a class="btn btn-danger" href="{{ url_for('.edit_profile_admin', id=user.id) }}">管理员编辑</a>
+            {% endif %}
+            </p>
+    </div>
+        {% if user.realname or user.location %}
+            <p>
+            {% if user.realname %}{{ user.realname }}{% endif %}<br>
+            {% if user.location %}地址：<a href="http://maps.google.com/?q={{ user.location }}">{{ user.location }}</a>
+            {% endif %}
+            </p>
+            {% endif %}
+            {% if current_user.is_administrator() %}
+            <p><a href="mailto:{{ user.email }}">{{ user.email }}</a> </p>
+            {% endif %}
+            {% if user.about_me %}
+            <p>{{ user.about_me }}</p>{% endif %}
+            <p>
+            注册时间：{{ moment(user.member_since).format('L') }}<br>
+            上次登录：{{ moment(user.last_seen).fromNow() }}<br>
+            博客数量：{{ user.posts.count() }}<br>
+                <a href="{{ url_for('.followed_by', username=user.username) }}">正在关注：<span class="badge">{{ user.followed.count() - 1 }}</span> </a>
+                <a href="{{ url_for('.followers', username=user.username) }}">关注者：<span class="badge">{{ user.followers.count() - 1 }}</span></a>
+            </p>
+        </div>
+
+    <h3>博客列表</h3>
+    {% include '_posts.html' %}
+{% endblock %}

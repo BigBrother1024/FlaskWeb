@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}博客-搜索{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>搜索</h1><br>
+<div class="post-tabs">
+<ul class="nav nav-tabs">
+  <li class="active"><a href="{{ url_for('main.search_posts', keyword=keyword) }}">内容</a></li>
+  <li><a href="{{ url_for('main.search_users', keyword=keyword) }}">用户</a></li>
+  <li><a href="{{ url_for('main.search_comments', keyword=keyword) }}">评论</a></li>
+</ul>
+    {% include '_posts.html' %}
+</div>
+</div>
+{% endblock %}

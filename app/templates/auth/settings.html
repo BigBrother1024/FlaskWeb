@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>设置</h1>
+</div>
+<ul class="nav nav-tabs">
+  <li class="active"><a href="{{ url_for('auth.change_account') }}">账户</a></li>
+  <li><a href="{{ url_for('auth.change_password') }}">密码</a></li>
+</ul><br><br>
+<div class="col-md-4">
+    {{ wtf.quick_form(form) }}
+</div>
+{% endblock %}
