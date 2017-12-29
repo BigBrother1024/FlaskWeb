@@ -1,3 +1,4 @@
+import os
 class Config():
     SECRET_KEY = 'wo shi wcg'
     MAIL_SERVER = 'smtp.qq.com'
@@ -7,7 +8,8 @@ class Config():
     MAIL_USERNAME = '332627893@qq.com'
     MAIL_PASSWORD = 'nysetemnmfvacaec'
     MAIL_DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:wcg@localhost/itswcg'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                              'mysql+pymysql://root:wcg@localhost/itswcg'
     SQLALCHEMY_COMMIT_ON_TRARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
