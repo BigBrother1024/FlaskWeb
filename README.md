@@ -9,4 +9,7 @@
 * reply to comment
 * use Bootstrap for other content
 ## Demo
-Please visit http://cuit3018.applinzi.com/
+Please visit 
+* http://cuit3018.applinzi.com/   deploy to sae
+* https://cuit3018.herokuapp.com/   deploy to heroku
+
