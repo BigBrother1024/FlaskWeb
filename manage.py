@@ -18,9 +18,13 @@ def deploy():
     from flask_migrate import upgrade
     from app.models import Role, User
 
+    db.drop_all()
     db.create_all()
     Role.insert_roles()
-
+    User.generate_fake(50)
+    Post.generate_fake(50)
+    Comment.generate_fake(50)
+    Reply.generate_fake(50)
 
 if __name__ == '__main__':
     manager.run()
