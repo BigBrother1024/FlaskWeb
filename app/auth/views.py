@@ -1,17 +1,19 @@
-#coding=utf-8
+# coding=utf-8
 from . import auth
 from flask import render_template, redirect, url_for, flash, request
-from .forms import LoginForm, RegisterionForm, ChangePasswordForm, ChangeEmailForm,\
+from .forms import LoginForm, RegisterionForm, ChangePasswordForm, ChangeEmailForm, \
     ForgetPasswordForm, ConfirmPasswordForm
 from ..models import User, Message
 from flask_login import login_required, logout_user, login_user, current_user
 from .. import db
 from ..email import send_email
 
+
 @auth.before_app_request
 def before_request():
     if current_user.is_authenticated:
         current_user.ping()
+
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -24,12 +26,14 @@ def login():
         flash('账号或密码错误！')
     return render_template('auth/login.html', form=form)
 
+
 @auth.route('/logout')
 @login_required
 def logout():
     logout_user()
     flash('你已退出')
     return redirect(url_for('main.index'))
+
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
@@ -46,12 +50,13 @@ def register():
         flash('确认邮件已经发送')
         if send_user:
             message = Message(sender=send_user,
-                            receiver=user,
-                            body='欢迎来到博客')
+                              receiver=user,
+                              body='欢迎来到博客')
             db.session.add(message)
             db.session.commit()
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
+
 
 @auth.route('/confirm/<token>', methods=['GET', 'POST'])
 def confirm(token):
@@ -77,6 +82,7 @@ def resend_confirmation():
     flash('一个新的确认邮件已发出')
     return redirect(url_for('main.index'))
 
+
 @auth.route('/settings/account', methods=['GET', 'POST'])
 @login_required
 def change_account():
@@ -95,6 +101,7 @@ def change_account():
             return redirect(url_for('auth.change_account'))
     return render_template('auth/settings.html', form=form)
 
+
 @auth.route('/settings/password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -111,6 +118,7 @@ def change_password():
             return redirect(url_for('auth.change_password'))
     return render_template('auth/change_password.html', form=form)
 
+
 @auth.route('/resetpassword', methods=['GET', 'POST'])
 def reset_password_token():
     form = ForgetPasswordForm()
@@ -122,12 +130,13 @@ def reset_password_token():
         return redirect(url_for('auth.login'))
     return render_template('auth/reset_password.html', form=form)
 
+
 @auth.route('/resetpassword/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     form = ConfirmPasswordForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user is not None :
+        if user is not None:
             if user.confirm(token):
                 user.password = form.password.data
                 flash('重设密码成功')

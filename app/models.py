@@ -10,6 +10,7 @@ from markdown import markdown
 import bleach
 import forgery_py
 
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -22,7 +23,8 @@ class Role(db.Model):
     def insert_roles():
         roles = {
             'User': (Permission.FOLLOW | Permission.WRITE_ARTICLES | Permission.COMMENT, True),
-            'Moderator': (Permission.COMMENT | Permission.WRITE_ARTICLES | Permission.FOLLOW | Permission.MODERATE_COMMENTS, False),
+            'Moderator': (
+            Permission.COMMENT | Permission.WRITE_ARTICLES | Permission.FOLLOW | Permission.MODERATE_COMMENTS, False),
             'Administrator': (0xff, False)
         }
         for r in roles:
@@ -35,7 +37,8 @@ class Role(db.Model):
         db.session.commit()
 
     def __repr__(self):
-        return '<Role %r>' %self.name
+        return '<Role %r>' % self.name
+
 
 class Post(db.Model):
     __tablename__ = 'posts'
@@ -55,7 +58,7 @@ class Post(db.Model):
         user_count = User.query.count()
         for i in range(count):
             u = User.query.offset(randint(0, user_count - 1)).first()
-            p = Post(body=forgery_py.lorem_ipsum.sentences(randint(1,3)),
+            p = Post(body=forgery_py.lorem_ipsum.sentences(randint(1, 3)),
                      timestamp=forgery_py.date.date(True),
                      author=u)
             db.session.add(p)
@@ -71,7 +74,9 @@ class Post(db.Model):
     def on_changed_body_body(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
                         'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1', 'h2', 'h3', 'p']
-        target.body_html = bleach.linkify(bleach.clean(markdown(value, output_format='html'), tags=allowed_tags, strip=True))
+        target.body_html = bleach.linkify(
+            bleach.clean(markdown(value, output_format='html'), tags=allowed_tags, strip=True))
+
 
 class Comment(db.Model):
     __tablename__ = 'comments'
@@ -92,8 +97,8 @@ class Comment(db.Model):
         user_count = User.query.count()
         post_count = Post.query.count()
         for i in range(count):
-            u = User.query.offset(randint(0, user_count -1)).first()
-            p = Post.query.offset(randint(0, post_count -1)).first()
+            u = User.query.offset(randint(0, user_count - 1)).first()
+            p = Post.query.offset(randint(0, post_count - 1)).first()
             c = Comment(body=forgery_py.lorem_ipsum.sentence(),
                         timestamp=forgery_py.date.date(True),
                         disabled=False,
@@ -101,6 +106,7 @@ class Comment(db.Model):
                         post=p)
             db.session.add(c)
             db.session.commit()
+
 
 class Message(db.Model):
     __tablename__ = 'messages'
@@ -110,6 +116,7 @@ class Message(db.Model):
     body = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
+
 
 class Reply(db.Model):
     __tablename__ = 'replies'
@@ -131,17 +138,19 @@ class Reply(db.Model):
             u = User.query.offset(randint(0, user_count - 1)).first()
             c = Comment.query.offset(randint(0, comment_count - 1)).first()
             r = Reply(body=forgery_py.lorem_ipsum.sentence(),
-                        timestamp=forgery_py.date.date(True),
-                        author=u,
-                        comment=c)
+                      timestamp=forgery_py.date.date(True),
+                      author=u,
+                      comment=c)
             db.session.add(r)
             db.session.commit()
+
 
 class Follow(db.Model):
     __tablename__ = 'follows'
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -179,10 +188,10 @@ class User(db.Model, UserMixin):
                                 cascade='all, delete-orphan')
 
     def is_following(self, user):
-        return self.followed.filter_by(followed_id = user.id).first() is not None
+        return self.followed.filter_by(followed_id=user.id).first() is not None
 
     def is_followed_by(self, user):
-        return self.followers.filter_by(followers_id = user.id).first() is not None
+        return self.followers.filter_by(followers_id=user.id).first() is not None
 
     def follow(self, user):
         if not self.is_following(user):
@@ -190,7 +199,7 @@ class User(db.Model, UserMixin):
             db.session.add(f)
 
     def unfollow(self, user):
-        f = self.followed.filter_by(followed_id = user.id).first()
+        f = self.followed.filter_by(followed_id=user.id).first()
         if f:
             db.session.delete(f)
 
@@ -235,7 +244,8 @@ class User(db.Model, UserMixin):
     def gravatar(self, size=100, default='identicon', rating='g'):
         url = 'http://www.gravatar.com/avatar'
         hash = self.avatar_hash
-        return '{url}/{hash}?s={size}&d={default}&r{rating}'.format(url=url, hash=hash, size=size, default=default, rating=rating)
+        return '{url}/{hash}?s={size}&d={default}&r{rating}'.format(url=url, hash=hash, size=size, default=default,
+                                                                    rating=rating)
 
     def can(self, permissions):
         return self.role is not None and (self.role.permissions & permissions) == permissions
@@ -276,6 +286,7 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return '<User %r>' % self.username
 
+
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
         return False
@@ -283,8 +294,10 @@ class AnonymousUser(AnonymousUserMixin):
     def is_administrator(self):
         return False
 
+
 login_manager.anonymous_user = AnonymousUser
 db.event.listen(Post.body, 'set', Post.on_changed_body_body)
+
 
 class Permission:
     FOLLOW = 0x01
@@ -292,6 +305,7 @@ class Permission:
     WRITE_ARTICLES = 0x04
     MODERATE_COMMENTS = 0x08
     ADMINISTER = 0x80
+
 
 @login_manager.user_loader
 def load_user(user_id):

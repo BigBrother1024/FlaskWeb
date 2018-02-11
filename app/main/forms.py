@@ -1,15 +1,17 @@
-#coding=utf-8
+# coding=utf-8
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, BooleanField, SelectField, ValidationError
 from wtforms.validators import Required, Length, Regexp, Email
 from ..models import Role, User
 from flask_pagedown.fields import PageDownField
 
+
 class EditProfileForm(FlaskForm):
     realname = StringField('真实名字', validators=[Length(0, 64)])
     location = StringField('地址', validators=[Length(0, 64)])
     about_me = TextAreaField('一句话介绍')
     submit = SubmitField('提交')
+
 
 class EditProfileAdminForm(FlaskForm):
     email = StringField('邮箱', validators=[Required(), Email()])
@@ -34,13 +36,16 @@ class EditProfileAdminForm(FlaskForm):
         if field.data != self.user.username and User.query.filter_by(username=field.data).first():
             raise ValidationError('用户名已存在')
 
+
 class PostForm(FlaskForm):
     body = PageDownField('此刻你的想法？', validators=[Required()])
     submit = SubmitField('发布')
 
+
 class CommentForm(FlaskForm):
     body = StringField('', validators=[Required()])
     submit = SubmitField('提交')
+
 
 class MessageForm(FlaskForm):
     message = StringField('消息', validators=[Required()])
