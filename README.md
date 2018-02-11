@@ -11,5 +11,5 @@
 ## Demo
 Please visit 
 * http://cuit3018.applinzi.com/   deploy to sae
-* https://cuit3018.herokuapp.com/   deploy to heroku
+* https://cuit3018.herokuapp.com/   deploy to heroku(源码在heroku分支）
 
