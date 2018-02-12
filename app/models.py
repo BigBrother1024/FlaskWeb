@@ -298,7 +298,7 @@ class User(db.Model, UserMixin):
                 self.email.encode('utf-8')).hexdigest()
 
     def gravatar(self, size=100, default='identicon', rating='g'):
-        url = 'http://www.gravatar.com/avatar'
+        url = 'https://www.gravatar.com/avatar'
         hash = self.avatar_hash
         return '{url}/{hash}?s={size}&d={default}&r{rating}'.format(url=url, hash=hash, size=size, default=default,
                                                                     rating=rating)
