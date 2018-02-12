@@ -21,7 +21,6 @@ def deploy():
     from flask_migrate import upgrade
     from app.models import Role, User
 
-    db.drop_all()
     db.create_all()
     Role.insert_roles()
     User.generate_fake(50)
