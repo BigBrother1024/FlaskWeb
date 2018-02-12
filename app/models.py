@@ -3,12 +3,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from flask import current_app
+from flask import current_app, url_for
 from datetime import datetime
 import hashlib
 from markdown import markdown
 import bleach
-import forgery_py
+from app.execptions import ValidationError
 
 
 class Role(db.Model):
@@ -24,7 +24,8 @@ class Role(db.Model):
         roles = {
             'User': (Permission.FOLLOW | Permission.WRITE_ARTICLES | Permission.COMMENT, True),
             'Moderator': (
-            Permission.COMMENT | Permission.WRITE_ARTICLES | Permission.FOLLOW | Permission.MODERATE_COMMENTS, False),
+                Permission.COMMENT | Permission.WRITE_ARTICLES | Permission.FOLLOW | Permission.MODERATE_COMMENTS,
+                False),
             'Administrator': (0xff, False)
         }
         for r in roles:
@@ -67,7 +68,8 @@ class Post(db.Model):
     @staticmethod
     def search_post(keyword):
         pattern = u'%{}%'.format(keyword)
-        posts = Post.query.filter(Post.body.like(pattern)).order_by(Post.timestamp.desc()).all()
+        posts = Post.query.filter(Post.body.like(pattern)).order_by(
+            Post.timestamp.desc()).all()
         return posts
 
     @staticmethod
@@ -76,6 +78,25 @@ class Post(db.Model):
                         'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1', 'h2', 'h3', 'p']
         target.body_html = bleach.linkify(
             bleach.clean(markdown(value, output_format='html'), tags=allowed_tags, strip=True))
+
+    def to_json(self):
+        json_post = {
+            'url': url_for('api.get_post', id=self.id, _external=True),
+            'body': self.body,
+            'body_html': self.body_html,
+            'timestamp': self.timestamp,
+            'author': url_for('api.get_user', id=self.author_id, _external=True),
+            'comments': url_for('api.get_post_comments', id=self.id, _external=True),
+            'comments_count': self.comments.count()
+        }
+        return json_post
+
+    @staticmethod
+    def from_json(json_post):
+        body = json_post.get('body')
+        if body is None or body == '':
+            raise ValidationError('post does not have a body')
+        return Post(body=body)
 
 
 class Comment(db.Model):
@@ -106,6 +127,24 @@ class Comment(db.Model):
                         post=p)
             db.session.add(c)
             db.session.commit()
+
+    def to_json(self):
+        json_comment = {
+            'url': url_for('api.get_comment', id=self.id, _external=True),
+            'post': url_for('api.get_post', id=self.post_id, _external=True),
+            'body': self.body,
+            'timestamp': self.timestamp,
+            'author': url_for('api.get_user', id=self.author_id,
+                              _external=True),
+        }
+        return json_comment
+
+    @staticmethod
+    def from_json(json_comment):
+        body = json_comment.get('body')
+        if body is None or body == '':
+            raise ValidationError('comment does not have a body')
+        return Comment(body=body)
 
 
 class Message(db.Model):
@@ -147,8 +186,10 @@ class Reply(db.Model):
 
 class Follow(db.Model):
     __tablename__ = 'follows'
-    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    follower_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -175,7 +216,8 @@ class User(db.Model, UserMixin):
                                lazy='dynamic',
                                cascade='all, delete-orphan')
     send_messages = db.relationship('Message', foreign_keys=[Message.sender_id],
-                                    backref=db.backref('sender', lazy='joined'),
+                                    backref=db.backref(
+                                        'sender', lazy='joined'),
                                     lazy='dynamic',
                                     cascade='all, delete-orphan')
     followed = db.relationship('Follow', foreign_keys=[Follow.follower_id],
@@ -230,6 +272,19 @@ class User(db.Model, UserMixin):
         db.session.add(self)
         return True
 
+    def generate_auth_token(self, expiration):
+        s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['id'])
+
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         self.followed.append(Follow(followed=self))
@@ -239,7 +294,8 @@ class User(db.Model, UserMixin):
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
         if self.email is not None and self.avatar_hash is None:
-            self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
+            self.avatar_hash = hashlib.md5(
+                self.email.encode('utf-8')).hexdigest()
 
     def gravatar(self, size=100, default='identicon', rating='g'):
         url = 'http://www.gravatar.com/avatar'
@@ -282,6 +338,17 @@ class User(db.Model, UserMixin):
     @property
     def followed_posts(self):
         return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(Follow.follower_id == self.id)
+
+    def to_json(self):
+        json_user = {
+            'url': url_for('api.get_post', id=self.id, _external=True),
+            'username': self.username,
+            'member_since': self.member_since,
+            'last_seen': self.last_seen,
+            'posts': url_for('api.get_user_posts', id=self.id, _external=True),
+            'post_count': self.posts.count()
+        }
+        return json_user
 
     def __repr__(self):
         return '<User %r>' % self.username
