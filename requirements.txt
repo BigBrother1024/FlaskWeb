@@ -32,3 +32,4 @@ Werkzeug==0.13
 WTForms==2.1
 psycopg2==2.5.1
 forgerypy==0.1
+Flask-HTTPAuth==3.2.3
