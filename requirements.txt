@@ -33,3 +33,6 @@ WTForms==2.1
 psycopg2==2.5.1
 forgerypy==0.1
 Flask-HTTPAuth==3.2.3
+redis==2.10.6
+celery==2.3.0
+flask-celery-helper==1.1.0
